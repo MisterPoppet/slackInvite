@@ -3,16 +3,29 @@ This is a simple Slack public invitation plugin for Craft CMS.
 
 ## Sample Form
 
-	<div class="alert">
-		{{ craft.session.getFlash( 'error', 'defaultValue' ) }}
-	</div>
+	{% set success = craft.session.getFlash('slacksuccess', false) %}
+	
+	{% if success or craft.request.getQuery('success') %}
+		<p>Signed up!</p>
+	{% else %}
+		<form method="post" accept-charset="UTF-8">
 
-	<form method="post" accept-charset="UTF-8">
-		<input type="hidden" name="action" value="slackInvite/sendInvite">
-		<input type="hidden" name="redirect" value="{{ siteUrl }}">
+			{{ getCsrfInput() }}
 
-		<input id="name" type="text" name="name" placeholder="Name">
-		<input id="email" type="email" name="email" placeholder="Email">
+			<input type="hidden" name="action" value="slackInvite/sendInvite">
+			
+			<div>
+				<input type="text" name="name" value="{{ slack is defined ? slack.name }}" placeholder="Name">
+				<input type="email" name="email" value="{{ slack is defined ? slack.email }}" placeholder="Email">
+				
+				<input class="submit" type="submit" value="Request an invite">
+				
+			</div>
 
-		<input type="submit" value="Invite">
-	</form>
+			{% if slack is defined and slack.hasErrors() %}
+				<div>
+					<p>{{ slack.getAllErrors()|join('<br>')|raw }}</p>
+				</div>
+			{% endif %}
+		</form>
+	{% endif %}
