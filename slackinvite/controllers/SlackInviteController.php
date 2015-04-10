@@ -2,37 +2,65 @@
 
 namespace Craft;
 
+/**
+ * Class SlackInviteController
+ *
+ * @package Craft
+ */
 class SlackInviteController extends BaseController
 {
+	/**
+	 * @var bool
+	 */
 	protected $allowAnonymous = true;
 
+	/**
+	 * @throws HttpException
+	 */
 	public function actionSendInvite()
 	{
 		$this->requirePostRequest();
 
-		$settings = craft()->plugins->getPlugin('SlackInvite')->getSettings();
-		$url = 'https://'.$settings->team.'.slack.com/api/users.admin.invite';
-		$data = array(
-			'email' => craft()->request->getPost('email'),
-			'first_name' => craft()->request->getPost('name'),
-			'channels' => $settings->channels,
-			'token' => $settings->token,
-			'set_active' => true,
-			'_attempts' => 1,
-		);
+		$email = craft()->request->getRequiredPost('email');
+		$name = craft()->request->getRequiredPost('name');
 
-		$client = new \Guzzle\Http\Client($url);
-		$result = $client->post(null, [], $data)->send();
-		$response = $result->json();
+		$model = new SlackInviteModel();
+		$model->email = $email;
+		$model->name = $name;
 
-		if(isset($response['error']))
+		$token = craft()->config->get('token', 'slackInvite');
+		$team = craft()->config->get('team', 'slackInvite');
+		$channels = craft()->config->get('channels', 'slackInvite');
+
+		if (!$team || !$token)
 		{
-			$error = str_replace("_", " ", $response['error']);
-			craft()->userSession->setError(Craft::t($error));
+			throw new Exception('Missing one or more required Slack Invite plugin settings.');
+		}
+
+		if ($model->validate() && craft()->slackInvite->invite($model, $token, $team, $channels))
+		{
+			if (craft()->request->isAjaxRequest())
+			{
+				$this->returnJson(array('success' => true));
+			}
+			else
+			{
+				craft()->userSession->setFlash('slacksuccess', true);
+				$this->redirectToPostedUrl();
+			}
 		}
 		else
 		{
-			$this->redirectToPostedUrl();
+			if (craft()->request->isAjaxRequest())
+			{
+				$this->returnJson(array('errors' => $model->getAllErrors()));
+			}
+			else
+			{
+				craft()->urlManager->setRouteVariables(array(
+					'slack' => $model
+				));
+			}
 		}
 	}
 }

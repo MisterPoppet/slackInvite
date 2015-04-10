@@ -1,6 +1,11 @@
 <?php
 namespace Craft;
 
+/**
+ * Class SlackInvitePlugin
+ *
+ * @package Craft
+ */
 class SlackInvitePlugin extends BasePlugin
 {
 	function getName()
@@ -21,21 +26,5 @@ class SlackInvitePlugin extends BasePlugin
 	function getDeveloperUrl()
 	{
 		return 'http://capsuledx.com';
-	}
-
-	protected function defineSettings()
-	{
-		return array(
-			'team' => AttributeType::String,
-			'token' => AttributeType::String,
-			'channels' => AttributeType::String
-		);
-	}
-
-	public function getSettingsHtml()
-	{
-		return craft()->templates->render('slackinvite/_settings', array(
-			'settings' => $this->getSettings()
-		));
 	}
 }
