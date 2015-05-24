@@ -28,8 +28,8 @@ class SlackInviteController extends BaseController
 		$model->email = $email;
 		$model->name = $name;
 
-		$token = craft()->config->get('token', 'slackInvite');
 		$team = craft()->config->get('team', 'slackInvite');
+		$token = craft()->config->get('token', 'slackInvite');
 		$channels = craft()->config->get('channels', 'slackInvite');
 
 		if (!$team || !$token)
